@@ -7,13 +7,15 @@ Code, Slides and other material for the talk on Deep Learning using TensorFlow a
 1. Install Anaconda
 2. Install necessary packages
 
-Note: In the following steps, we install a cpu-specific version of `tensorflow`, which is good enough for the session, but not for most real-world tasks.
+Notes
+* In the following steps, we install a cpu-specific version of `tensorflow`, which is good enough for the session, but not for most real-world tasks.
+* The instructions have been tested only on Ubuntu and OS X (we didn't have a windows system available for testing; please raise a issue if you hit any snags on your windows system).
 
 ---
 
 ## Install Anaconda
 
-(Updated from https://github.com/soumendra/CarND-Term1-Starter-Kit/blob/master/doc/configure_via_anaconda.md)
+(Updated from [Udacity's instructions](https://github.com/soumendra/CarND-Term1-Starter-Kit/blob/master/doc/configure_via_anaconda.md))
 
 Per the Anaconda [docs](http://conda.pydata.org/docs):
 
