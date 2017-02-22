@@ -7,6 +7,8 @@ Code, Slides and other material for the talk on Deep Learning using TensorFlow a
 1. Install Anaconda
 2. Install necessary packages
 
+Note: In the following steps, we install a cpu-specific version of `tensorflow`, which is good enough for the session, but not for most real-world tasks.
+
 ---
 
 ## Install Anaconda
