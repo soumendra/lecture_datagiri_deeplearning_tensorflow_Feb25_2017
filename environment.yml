@@ -13,6 +13,6 @@ dependencies:
     - h5py
     - seaborn
     - pandas
+    - tensorflow
     - pip:
-        - tensorflow
         - git+https://github.com/fchollet/keras.git
