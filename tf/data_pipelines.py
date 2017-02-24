@@ -49,12 +49,9 @@ with tf.name_scope("input_data"):
   record_bytes = tf.decode_raw(value, tf.uint8)
   
   label = tf.cast(tf.strided_slice(record_bytes, [0], [label_bytes]), tf.int32)
-
-   depth_major = tf.reshape(tf.strided_slice(record_bytes, [label_bytes],
+  depth_major = tf.reshape(tf.strided_slice(record_bytes, [label_bytes],
                                              [label_bytes + image_bytes]), [depth, height, width])
+  uint8image = tf.transpose(depth_major, [1, 2, 0])
+  image = tf.cast(uint8image, tf.float32)
 
-    uint8image = tf.transpose(depth_major, [1, 2, 0])
-    
-    image = tf.cast(uint8image, tf.float32)
-    
-    #Image and label to the file storeage bin - tf.train.shuffle_batch
+#Image and label to the file storeage bin - tf.train.shuffle_batch
