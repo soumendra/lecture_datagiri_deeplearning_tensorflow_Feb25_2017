@@ -33,3 +33,28 @@ with tf.name_scope("queue_images"):
                                                       capacity = capacity, min_after_dequeue = min_after_dequeue)
   
   # feed example_batch and label_batch to the network
+
+  
+# How to Read Binary Files using tensorflow ?
+with tf.name_scope("input_data"):
+  label_bytes = 2 # CIFAR 100 has 0-99 labels #use 1 for CIFAR-10 (0-9)
+  height, width, depth = 32, 32, 2
+  image_bytes = 32* 32 * 3
+  
+  record_bytes = label_bytes + image_bytes 
+  
+  reader = tf.FixedLengthRecordReader(record_bytes = record_bytes)
+  key, value = reader.read(filename_queue) #read filename queue.
+  
+  record_bytes = tf.decode_raw(value, tf.uint8)
+  
+  label = tf.cast(tf.strided_slice(record_bytes, [0], [label_bytes]), tf.int32)
+
+   depth_major = tf.reshape(tf.strided_slice(record_bytes, [label_bytes],
+                                             [label_bytes + image_bytes]), [depth, height, width])
+
+    uint8image = tf.transpose(depth_major, [1, 2, 0])
+    
+    image = tf.cast(uint8image, tf.float32)
+    
+    #Image and label to the file storeage bin - tf.train.shuffle_batch
