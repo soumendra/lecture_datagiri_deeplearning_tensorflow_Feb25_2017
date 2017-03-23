@@ -14,10 +14,10 @@ class Model:
         self._error = None
 
 
-    # def prediction(self,m):
-    #     with tf.Session() as sess:
-    #         prediction = tf.nn.softmax(self.model(m))
-    #     return prediction
+    def prediction(self,m):
+        with tf.Session() as sess:
+            prediction = tf.nn.softmax(self.model(m))
+        return prediction
 
     def optimize(self, optimizer= "sgd"):
         """
@@ -43,7 +43,7 @@ class Model:
             self._optimize = optimizer.minimize(self._error)
 
 
-    def train(self, batch_size = 32, epochs = 20):
+    def train(self, batch_size = 32, epochs = 20, summary_dir = None , save_path = None):
         """
         initialize all the variables, train the network
 
@@ -51,11 +51,17 @@ class Model:
         batch_size: the number of images used at a time to pass through the network
         epochs: the total number of times each images is passed through the network
         """
-        saver = tf.train.Saver(tf.global_variables(), max_to_keep = 20)
+        saver = tf.train.Saver(tf.global_variables(), max_to_keep = 2)
         merged = tf.summary.merge_all()
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
         with tf.Session() as sess:
             sess.run(init_op)
+            if tf.gfile.Exists(save_path):
+                filename = tf.train.latest_checkpoint(save_path)
+                print ("[Restoring the last checkpoint with filename]",filename)
+                saver.restore(sess,filename)
+
+            training_writer = tf.summary.FileWriter(summary_dir + '/training',sess.graph)
             total_iter = int(len(self.data)/batch_size)*epochs
             for i in range(total_iter):
                 #print ("[Total Iterations]",len(self.data)/batch_size)
@@ -64,4 +70,10 @@ class Model:
                     correct_prediction = tf.equal(tf.argmax(tf.nn.softmax(self.model), 1), tf.argmax(self.y, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
                     print ("Accuracy:", accuracy.eval({self.x: self.test_data[:3000], self.y: self.target_data[:3000]}))
+            if save_path:
+                if not tf.gfile.IsDirectory(save_path):
+                        tf.gfile.MkDir(save_path)
+                    checkpoint_path = os.path.join(save_path, 'model.ckpt')
+                    saver.save(sess, checkpoint_path, global_step=global_step)
+                    tf.train.write_graph(sess.graph_def, '/tmp/mnist_model', 'train_{}.pb'.format(step))
         print("[The Algorithm is optimized]")
