@@ -15,8 +15,15 @@ class Model:
 
 
     def prediction(self,m):
+        saver = tf.train.Saver(tf.global_variables(), max_to_keep = 2)
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
         with tf.Session() as sess:
-            prediction = tf.nn.softmax(self.model(m))
+            sess.init(init_op)
+            if tf.gfile.Exists(save_path):
+                filename = tf.train.latest_checkpoint(save_path)
+                print ("[Restoring the last checkpoint with filename]",filename)
+                saver.restore(sess,filename)
+            prediction = sess.run([tf.nn.softmax(self.model)], feed_dict = {self.x:m})
         return prediction
 
     def optimize(self, optimizer= "sgd"):
@@ -65,7 +72,8 @@ class Model:
             total_iter = int(len(self.data)/batch_size)*epochs
             for i in range(total_iter):
                 #print ("[Total Iterations]",len(self.data)/batch_size)
-                ce,_ = sess.run([self._error,self._optimize], feed_dict={self.x: self.data[i*batch_size:(i+1)*batch_size,], self.y: self.target[i*batch_size:(i+1)*batch_size,]})
+                summary, ce,_ = sess.run([merged, self._error,self._optimize], feed_dict={self.x: self.data[i*batch_size:(i+1)*batch_size,], self.y: self.target[i*batch_size:(i+1)*batch_size,]})
+                training_writer.add_summary(summary, i)
                 if i % 100 == 0:
                     correct_prediction = tf.equal(tf.argmax(tf.nn.softmax(self.model), 1), tf.argmax(self.y, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
