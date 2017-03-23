@@ -26,27 +26,33 @@ class Model:
             prediction = sess.run([tf.nn.softmax(self.model)], feed_dict = {self.x:m})
         return prediction
 
-    def optimize(self, optimizer= "sgd"):
+    def optimize(self, optimizer= "sgd", learning_rate = 0.0001):
         """
         calculate the loss and minimize the loss using an optimizer
         """
         if not self._optimize:
-            out = tf.nn.softmax_cross_entropy_with_logits(labels=self.y, logits = self.model)
-            self._error= tf.reduce_mean(out)
+            epsilon = tf.constant(value=0.00001)
+            logits = self.model + epsilon
+            softmax = tf.nn.softmax(logits)
+            self._error = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(softmax),
+                                                 reduction_indices=1))
+            #out = tf.nn.softmax_cross_entropy_with_logits(logits = self.model, labels=self.y)
+            #self._error= tf.reduce_mean(out)
+            tf.summary.scalar("cross_entropy", self._error)
             if optimizer == "sgd":
-                optimizer = tf.train.GradientDescentOptimizer(0.0001)
+                optimizer = tf.train.GradientDescentOptimizer(learning_rate)
             elif optimizer == "adam":
-                optimizer = tf.train.AdamOptimizer(0.0001)
+                optimizer = tf.train.AdamOptimizer(learning_rate)
             elif optimizer == "rmsprop":
-                optimizer = tf.train.RMSPropOptimizer(0.0001)
+                optimizer = tf.train.RMSPropOptimizer(learning_rate)
             elif optimizer == "momentum":
-                optimizer = tf.train.MomentumOptimizer(0.0001)
+                optimizer = tf.train.MomentumOptimizer(learning_rate)
             elif optimizer == "adadelta":
-                optimizer = tf.train.AdadeltaOptimizer(0.0001)
+                optimizer = tf.train.AdadeltaOptimizer(learning_rate)
             elif optimizer == "adagrad":
-                optimizer = tf.train.AdagradOptimizer(0.0001)
+                optimizer = tf.train.AdagradOptimizer(learning_rate)
             elif optimizer == "ftrl":
-                optimizer = tf.train.FtrlOptimizer(0.0001)
+                optimizer = tf.train.FtrlOptimizer(learning_rate)
             self._optimize = optimizer.minimize(self._error)
 
 
@@ -72,16 +78,15 @@ class Model:
             total_iter = int(len(self.data)/batch_size)*epochs
             for i in range(total_iter):
                 #print ("[Total Iterations]",len(self.data)/batch_size)
-                summary, ce,_ = sess.run([merged, self._error,self._optimize], feed_dict={self.x: self.data[i*batch_size:(i+1)*batch_size,], self.y: self.target[i*batch_size:(i+1)*batch_size,]})
+                summary, ce, _ = sess.run([merged, self._error,self._optimize], feed_dict={self.x: self.data[i*batch_size:(i+1)*batch_size,], self.y: self.target[i*batch_size:(i+1)*batch_size,]})
                 training_writer.add_summary(summary, i)
                 if i % 100 == 0:
                     correct_prediction = tf.equal(tf.argmax(tf.nn.softmax(self.model), 1), tf.argmax(self.y, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-                    print ("Accuracy:", accuracy.eval({self.x: self.test_data[:3000], self.y: self.target_data[:3000]}))
+                    print ("Accuracy:", accuracy.eval({self.x: self.test_data, self.y: self.target_data}), "Error:", ce)
             if save_path:
                 if not tf.gfile.IsDirectory(save_path):
                         tf.gfile.MkDir(save_path)
-                    checkpoint_path = os.path.join(save_path, 'model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=global_step)
-                    tf.train.write_graph(sess.graph_def, '/tmp/mnist_model', 'train_{}.pb'.format(step))
+                checkpoint_path = os.path.join(save_path, 'model.ckpt')
+                saver.save(sess, checkpoint_path, global_step=global_step)
         print("[The Algorithm is optimized]")

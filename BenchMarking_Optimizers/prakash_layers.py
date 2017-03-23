@@ -33,16 +33,15 @@ def fc(inputs, output_shape, name, activation = True):
     with tf.variable_scope(name) as scope:
         weights= tf.get_variable("weights",[shape[1], output_shape] ,tf.float32,  tf.truncated_normal_initializer(stddev=0.1, dtype = tf.float32))
         variable_summaries(weights)
-        bias =  tf.get_variable("bias",output_shape,tf.float32, tf.constant_initializer(0.0))
+        bias =  tf.get_variable("bias",output_shape,tf.float32, tf.constant_initializer(1.0))
         variable_summaries(bias)
         nets = tf.add(tf.matmul(inputs, weights), bias)
         if activation:
-            nets = tf.nn.relu(nets)
+            nets = tf.maximum(nets, 0.1*nets)
     return nets
 
 def model(inputs, outputs):
-    nets = fc(inputs,512,"FC_1", activation = True)
-    nets = fc(nets, 256, "FC_2", activation = True)
-    nets = fc(inputs,512,"FC_3", activation = True)
+    nets = fc(inputs,256,"FC_1", activation = True)
+    nets = fc(nets, 128, "FC_2", activation = True)
     nets = fc(nets, outputs.get_shape()[1],"output_layer", activation = False)
     return nets
