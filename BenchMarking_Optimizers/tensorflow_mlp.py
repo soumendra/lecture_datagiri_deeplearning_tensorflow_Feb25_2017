@@ -31,11 +31,12 @@ class Model:
         calculate the loss and minimize the loss using an optimizer
         """
         if not self._optimize:
-            epsilon = tf.constant(value=0.00001)
-            logits = self.model + epsilon
-            softmax = tf.nn.softmax(logits)
-            self._error = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(softmax),
-                                                 reduction_indices=1))
+            #self._error = -tf.reduce_sum(self.y*tf.log(tf.nn.softmax(self.model)+ 1e-9))
+            #self._error = -tf.reduce_sum(self.y*tf.nn.log_softmax(self.model))
+            self._error = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.model, labels=self.y))
+
+            # self._error = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(tf.nn.softmax(self.model)+1e-8),
+            #                                      reduction_indices=1))
             #out = tf.nn.softmax_cross_entropy_with_logits(logits = self.model, labels=self.y)
             #self._error= tf.reduce_mean(out)
             tf.summary.scalar("cross_entropy", self._error)
